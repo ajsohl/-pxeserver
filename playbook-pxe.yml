@@ -6,30 +6,23 @@
     - vars.yml
 
   tasks:
-    - name: Ensure chronyd, dnsmasq, syslinux, tftp-server, vsftpd, firewalld and rhel-system-roles are  installed
+    - name: Ensure dnsmasq, syslinux, tftp-server and firewalld are installed.
       yum:
         name:
-          - chrony
           - dnsmasq
           - syslinux
           - tftp-server
-          - vsftpd
           - firewalld
-          - rhel-system-roles
         state: present
 
-    - name: Ensure pxelinux.cfg, pub, rocky9, and nbi_img DIRECTORIES exist.
+    - name: Ensure pxelinux.cfg and distro directories exist.
       file:
         path: "{{ item }}"
         state: directory
-        owner: root
-        group: root
         mode: '0755'
       with_items:
         - /var/lib/tftpboot/pxelinux.cfg
-        - /var/ftp/pub
-        - /var/lib/tftpboot/rocky9
-        - /var/lib/tftpboot/nbi_img
+        - "/var/lib/tftpboot/{{ tftp_dir }}"
 
     - name: Ensure OS files exist.
       get_url:
@@ -55,31 +48,26 @@
         - src: /usr/share/syslinux/
           dest: /var/lib/tftpboot
         - src: /mnt/images/pxeboot/vmlinuz
-          dest: /var/lib/tftpboot/rocky9
+          dest: "/var/lib/tftpboot/{{ tftp_dir }}"
         - src: /mnt/images/pxeboot/initrd.img
-          dest: /var/lib/tftpboot/rocky9
-        - src: /mnt/
-          dest: /var/ftp/pub
+          dest: "/var/lib/tftpboot/{{ tftp_dir }}"
 
     - name: import the config files
       copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
         mode: "0755"
+        backup: yes
       with_items: 
         - src: default
           dest: /var/lib/tftpboot/pxelinux.cfg/default
         - src: dnsmasq.conf
           dest: /etc/dnsmasq.conf
-        - src: vsftpd.conf
-          dest: /etc/vsftpd/vsftpd.conf
-        - src: user_list
-          dest: /etc/vsftpd/user_list
 
-    - name: unmount OS ISOs
-      mount:
-        path: /mnt
-        state: unmounted
+#    - name: unmount OS ISOs
+#      mount:
+#        path: /mnt
+#        state: unmounted
 
     - name: Ensure all the daemons are running.
       service:
@@ -87,9 +75,7 @@
         state: started
         enabled: yes
       with_items:
-        - chronyd
         - dnsmasq
-        - vsftpd
         - firewalld
 
     - name: Configure allowed services with firewalld.
@@ -119,13 +105,12 @@
       with_items:
         - '69/udp'
         - '4011/udp'
-        - '10090-10100/tcp'
+        - '4000-5000/tcp'
 
-    - name: Restart firewalld and vsftpd.
+    - name: Restart firewalld and dnsmasq.
       service:
         name: "{{ item }}"
         state: restarted
       with_items:
         - firewalld
         - dnsmasq
-        - vsftpd

@@ -16,3 +16,7 @@ Change the IP range and default gateway IP in the config file to match your netw
 
 ## Using WSL2
 Virtualbox will need to be installed in Windows (not WSL) but Vagrant and Ansible should be installed in WSL2.
+
+
+## FTP
+I've seperated the pxe server playbook from the ftp server playbook since I'm still working through bugs with using VSFTP and ansible.

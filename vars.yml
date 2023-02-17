@@ -5,6 +5,7 @@ download_dir: /tmp
 # linux_dir: 
 linux_url: "https://download.rockylinux.org/pub/rocky/9/isos/x86_64/Rocky-9.1-x86_64-dvd.iso"
 linux_ver: "rocky.9"
+tftp_dir: "rocky9"
 #linux_checksum: sha256:d490bac0fbc08b5621b8d5c861fb6e2ac0c46fa6b78cc3858d8594c56d65d5cb
 
 # static ip

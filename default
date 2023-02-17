@@ -8,12 +8,7 @@ menu title ########## PXE Boot Menu ##########
 label 1
 menu label ^1) Install Rocky Linux 9 x64 with Local Repo
 kernel rocky9/vmlinuz
-append initrd=rocky9/initrd.img method=ftp://192.168.50.188/pub devfs=nomount
-
-label 2
-menu label ^2) Install Rocky Linux 9 x64 with http://mirror.centos.org Repo
-kernel rocky9/vmlinuz method=http://dfw.mirror.rackspace.com/rocky/9/BaseOS/x86_64/os/
-append initrd=rocky9/initrd.img method= devfs=nomount ip=dhcp
+append initrd=rocky9/initrd.img inst.repo=ftp://192.168.50.188/pub/rocky9 devfs=nomount
 
 label 4
 menu label ^4) Boot from local drive
