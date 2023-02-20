@@ -19,4 +19,4 @@ Virtualbox will need to be installed in Windows (not WSL) but Vagrant and Ansibl
 
 
 ## FTP
-I've seperated the pxe server playbook from the ftp server playbook since I'm still working through bugs with using VSFTP and ansible.
+Using ansible's copy module to move the iso files from the mount point to the /var/ftp folder does not allow the directories to be visible in FileZilla. To get around this, I used thed shell module and then used cp to move the files. This solved the issue.
