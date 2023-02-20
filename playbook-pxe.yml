@@ -1,73 +1,53 @@
 ---
-- hosts: all
+- hosts: pxe
   become: yes
 
-  vars_files:
-    - vars.yml
-
   tasks:
-    - name: Ensure dnsmasq, syslinux, tftp-server and firewalld are installed.
+    - name: Ensure dnsmasq, syslinux, tftp-server, vsftpd and firewalld are installed.
       yum:
         name:
           - dnsmasq
           - syslinux
           - tftp-server
+          - vsftpd
           - firewalld
         state: present
 
-    - name: Ensure pxelinux.cfg and distro directories exist.
+    - name: Ensure pxelinux.cfg directory exists.
       file:
-        path: "{{ item }}"
+        path: /var/lib/tftpboot/pxelinux.cfg
         state: directory
         mode: '0755'
-      with_items:
-        - /var/lib/tftpboot/pxelinux.cfg
-        - "/var/lib/tftpboot/{{ tftp_dir }}"
 
-    - name: Ensure OS files exist.
-      get_url:
-        url: "{{ linux_url }}"
-        dest: "{{ download_dir }}/linux-{{ linux_ver }}.iso"
-        #checksum: "{{ linux_checksum }}"
-
-    - name: mount the OS iso
-      mount:
-        path: /mnt
-        src: "{{ download_dir }}/linux-{{ linux_ver }}.iso"
-        fstype: iso9660
-        opts: ro,noauto
-        state: mounted
+    - name: Ensure vsftpd pub directory exists.
+      file:
+        path: /var/ftp/pub
+        state: directory
+        mode: '0755'
+        owner: nobody
+        group: nobody
+        recurse: yes
 
     - name: copy files into the boot locations
       copy:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
+        src: /usr/share/syslinux/
+        dest: /var/lib/tftpboot
         mode: '0755'
         remote_src: yes
-      with_items:
-        - src: /usr/share/syslinux/
-          dest: /var/lib/tftpboot
-        - src: /mnt/images/pxeboot/vmlinuz
-          dest: "/var/lib/tftpboot/{{ tftp_dir }}"
-        - src: /mnt/images/pxeboot/initrd.img
-          dest: "/var/lib/tftpboot/{{ tftp_dir }}"
 
     - name: import the config files
       copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
         mode: "0755"
-        backup: yes
       with_items: 
         - src: default
           dest: /var/lib/tftpboot/pxelinux.cfg/default
         - src: dnsmasq.conf
           dest: /etc/dnsmasq.conf
-
-#    - name: unmount OS ISOs
-#      mount:
-#        path: /mnt
-#        state: unmounted
+        - src: vsftpd.conf
+          dest: /etc/vsftpd/vsftpd.conf
+        
 
     - name: Ensure all the daemons are running.
       service:
@@ -76,6 +56,7 @@
         enabled: yes
       with_items:
         - dnsmasq
+        - vsftpd
         - firewalld
 
     - name: Configure allowed services with firewalld.

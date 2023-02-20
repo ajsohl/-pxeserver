@@ -1,0 +1,57 @@
+---
+- hosts: all
+  become: yes
+
+  vars_files:
+    vars.yml
+
+  tasks:
+    - name: ensure tftpd directory exists
+      file:
+        path: "/var/lib/tftpboot/rocky9"
+        state: directory
+        mode: '0755'
+
+    - name: ensure vsftpd directory exists
+      file:
+        path: "/var/ftp/pub/rocky9"
+        state: directory
+        mode: '0755'
+        owner: nobody
+        group: nobody
+        recurse: yes
+    
+    - name: ensure iso is downloaded
+      get_url:
+        url: "{{ rocky9_url }}"
+        dest: "{{ download_dir }}/{{ rocky9_iso }}"
+
+
+    - name: mount the ISO
+      mount:
+        path: "/mnt/{{ rocky9_iso }}"
+        src: "{{ download_dir }}/{{ rocky9_iso }}"
+        fstype: iso9660
+        opts: ro,noauto
+        state: mounted
+  
+    - name: copy iso files to necessary folders
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: '0755'
+        remote_src: yes
+      with_items:
+        - src: "/mnt/{{ rocky9_iso }}/images/pxeboot/vmlinuz"
+          dest: "/var/lib/tftpboot/rocky9"
+        - src: "/mnt/{{ rocky9_iso }}/images/pxeboot/initrd.img"
+          dest: "/var/lib/tftpboot/rocky9"
+
+    - name: copy iso to ftp folder
+      shell:
+        cp -R /mnt/{{ rocky9_iso }}/* /var/ftp/pub/rocky9
+
+    - name: unmount ISO
+      mount:
+        path: /mnt
+        state: unmounted 
